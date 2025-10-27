@@ -1,0 +1,2928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandboxels Plus Ultimate - Complete Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #app {
+            display: grid;
+            grid-template-columns: 260px 1fr 560px;
+            grid-template-rows: 60px 1fr 40px;
+            height: 100vh;
+            gap: 0;
+        }
+
+        #toolbar {
+            grid-column: 1 / 4;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 8px;
+            border-bottom: 3px solid #0f3460;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .tool-btn, .action-btn {
+            padding: 10px 16px;
+            background: #16213e;
+            border: 2px solid #0f3460;
+            color: #e94560;
+            cursor: pointer;
+            font-size: 8px;
+            transition: all 0.2s;
+            font-family: 'Press Start 2P', monospace;
+            border-radius: 4px;
+        }
+
+        .tool-btn:hover, .action-btn:hover {
+            background: #0f3460;
+            border-color: #e94560;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(233, 69, 96, 0.3);
+        }
+
+        .tool-btn.active {
+            background: #e94560;
+            color: white;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.6);
+        }
+
+        #custom-ui-buttons {
+            display: flex;
+            gap: 8px;
+            margin-left: 15px;
+            padding-left: 15px;
+            border-left: 2px solid #0f3460;
+        }
+
+        #palette {
+            background: #0f0f0f;
+            overflow-y: auto;
+            padding: 12px;
+            border-right: 2px solid #1a1a2e;
+        }
+
+        .category {
+            margin-bottom: 15px;
+        }
+
+        .category-title {
+            font-size: 9px;
+            color: #e94560;
+            margin-bottom: 8px;
+            padding: 6px;
+            background: #16213e;
+            border-left: 3px solid #e94560;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-title:hover {
+            background: #1a1a2e;
+            padding-left: 10px;
+        }
+
+        .category-title.collapsed::after {
+            content: " ▶";
+        }
+
+        .category-title.expanded::after {
+            content: " ▼";
+        }
+
+        .category-elements {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .category-elements.collapsed {
+            max-height: 0;
+        }
+
+        .element-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 4px 0;
+            border: 2px solid #1a1a2e;
+            background: #151515;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Press Start 2P', monospace;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .element-btn:hover {
+            background: #1a1a2e;
+            border-color: #e94560;
+            transform: translateX(4px);
+        }
+
+        .element-btn.selected {
+            background: #16213e;
+            border-color: #e94560;
+            box-shadow: 0 0 8px rgba(233, 69, 96, 0.3);
+        }
+
+        .element-color {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #000;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+            border-radius: 2px;
+        }
+
+        .element-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .element-alias {
+            font-size: 6px;
+            color: #888;
+        }
+
+        #canvas-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0a;
+            position: relative;
+        }
+
+        #canvas {
+            border: 3px solid #16213e;
+            image-rendering: pixelated;
+            cursor: crosshair;
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.2);
+            border-radius: 4px;
+        }
+
+        #canvas.inspect-cursor { cursor: help; }
+        #canvas.tool-cursor { cursor: pointer; }
+
+        #inspect-tooltip {
+            position: fixed;
+            background: rgba(26, 26, 46, 0.98);
+            border: 2px solid #e94560;
+            padding: 12px;
+            font-size: 8px;
+            pointer-events: none;
+            display: none;
+            z-index: 1000;
+            max-width: 350px;
+            line-height: 1.8;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            border-radius: 6px;
+            backdrop-filter: blur(10px);
+        }
+
+        #inspect-tooltip.active { display: block; }
+
+        .tooltip-title {
+            color: #e94560;
+            font-size: 11px;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #0f3460;
+            padding-bottom: 6px;
+        }
+
+        .tooltip-section {
+            margin: 8px 0;
+        }
+
+        .tooltip-section-title {
+            color: #4a90e2;
+            font-size: 8px;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-prop {
+            margin: 4px 0;
+            padding-left: 8px;
+        }
+
+        .tooltip-label {
+            color: #888;
+        }
+
+        .tooltip-value {
+            color: #4a90e2;
+        }
+
+        #sidebar {
+            background: #0f0f0f;
+            overflow-y: auto;
+            padding: 15px;
+            border-left: 2px solid #1a1a2e;
+        }
+
+        .panel {
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #e94560;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #0f3460;
+            padding-bottom: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 7px;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+
+        .input-field, .select-field, .textarea-field {
+            width: 100%;
+            padding: 8px;
+            background: #0a0a0a;
+            border: 2px solid #0f3460;
+            color: #e0e0e0;
+            font-size: 9px;
+            font-family: 'Courier New', monospace;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus, .textarea-field:focus, .select-field:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .textarea-field {
+            resize: vertical;
+            min-height: 80px;
+            line-height: 1.4;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .small-btn {
+            flex: 1;
+            padding: 10px;
+            background: #16213e;
+            border: 2px solid #0f3460;
+            color: #e94560;
+            cursor: pointer;
+            font-size: 8px;
+            font-family: 'Press Start 2P', monospace;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .small-btn.primary {
+            background: #e94560;
+            color: white;
+        }
+
+        .small-btn:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 90px;
+            padding: 8px;
+            background: #0a0a0a;
+            border: 2px solid #0f3460;
+            color: #888;
+            cursor: pointer;
+            font-size: 6px;
+            font-family: 'Press Start 2P', monospace;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .tab-btn.active {
+            background: #16213e;
+            color: #e94560;
+            border-color: #e94560;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        #status-bar {
+            grid-column: 1 / 4;
+            background: #16213e;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 8px;
+            font-family: 'Press Start 2P', monospace;
+            border-top: 2px solid #0f3460;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+        }
+
+        .status-value {
+            color: #e94560;
+            font-weight: bold;
+        }
+
+        .help-box {
+            background: #0a0a0a;
+            border-left: 3px solid #e94560;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 6px;
+            color: #888;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            border-radius: 4px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            font-size: 7px;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .checkbox-label:hover {
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+
+        .prop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #16213e;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1a1a2e;
+        }
+
+        .section-divider {
+            border-top: 2px solid #0f3460;
+            margin: 14px 0;
+            padding-top: 10px;
+        }
+
+        .section-subtitle {
+            font-size: 9px;
+            color: #e94560;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .mod-item {
+            background: #0a0a0a;
+            border: 2px solid #0f3460;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .mod-item:hover {
+            border-color: #e94560;
+            transform: translateX(4px);
+        }
+
+        .mod-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .mod-name {
+            color: #e94560;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .mod-id {
+            color: #666;
+            font-size: 7px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .mod-desc {
+            font-size: 7px;
+            color: #aaa;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .mod-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .tiny-btn {
+            padding: 6px 10px;
+            background: #16213e;
+            border: 1px solid #0f3460;
+            color: #e94560;
+            cursor: pointer;
+            font-size: 6px;
+            font-family: 'Press Start 2P', monospace;
+            transition: all 0.2s;
+            border-radius: 3px;
+        }
+
+        .tiny-btn:hover {
+            background: #1a1a2e;
+        }
+
+        .tiny-btn.danger {
+            background: #e94560;
+            color: white;
+        }
+
+        #mod-banner {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: rgba(26, 26, 46, 0.98);
+            border: 3px solid #e94560;
+            padding: 18px;
+            max-width: 450px;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.6);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        #mod-banner.active {
+            display: block;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .banner-title {
+            font-size: 13px;
+            color: #e94560;
+            margin-bottom: 12px;
+        }
+
+        .banner-content {
+            font-size: 8px;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .banner-close {
+            background: #e94560;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 8px;
+            font-family: 'Press Start 2P', monospace;
+            width: 100%;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .banner-close:hover {
+            background: #ff5570;
+        }
+
+        .example-mod {
+            background: #0a0a0a;
+            border: 1px solid #0f3460;
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-mod:hover {
+            border-color: #e94560;
+            background: #16213e;
+            transform: translateX(4px);
+        }
+
+        .example-mod-title {
+            font-size: 8px;
+            color: #4a90e2;
+            margin-bottom: 4px;
+        }
+
+        .example-mod-desc {
+            font-size: 6px;
+            color: #888;
+        }
+
+        .element-list-item {
+            background: #0a0a0a;
+            border: 1px solid #0f3460;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .element-list-item:hover {
+            border-color: #e94560;
+            background: #16213e;
+            transform: translateX(4px);
+        }
+
+        .element-detail-view {
+            background: #0a0a0a;
+            border: 2px solid #0f3460;
+            padding: 12px;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .property-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px;
+            margin: 2px 0;
+            background: #16213e;
+            border-radius: 3px;
+            font-size: 7px;
+        }
+
+        .property-key {
+            color: #888;
+        }
+
+        .property-value {
+            color: #4a90e2;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-value {
+            min-width: 30px;
+            text-align: right;
+            color: #e94560;
+            font-size: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="toolbar">
+            <button class="tool-btn active" data-tool="draw">✏️ Draw</button>
+            <button class="tool-btn" data-tool="erase">🧹 Erase</button>
+            <button class="tool-btn" data-tool="heat">🔥 Heat</button>
+            <button class="tool-btn" data-tool="cool">❄️ Cool</button>
+            <button class="tool-btn" data-tool="inspect">🔍 Inspect</button>
+            <div style="flex: 1"></div>
+            <div id="custom-ui-buttons"></div>
+            <button class="action-btn" onclick="sim.clear()">🗑️ Clear</button>
+            <button class="action-btn" onclick="sim.pause = !sim.pause; updatePauseButton()">⏸️ Pause</button>
+            <button class="action-btn" onclick="saveWorld()">💾 Save</button>
+            <button class="action-btn" onclick="loadWorld()">📂 Load</button>
+        </div>
+
+        <div id="palette"></div>
+
+        <div id="canvas-container">
+            <canvas id="canvas"></canvas>
+            <div id="inspect-tooltip"></div>
+        </div>
+
+        <div id="sidebar">
+            <div class="panel">
+                <div class="panel-title">📦 Mod Manager</div>
+                
+                <div class="tab-container">
+                    <button class="tab-btn active" onclick="switchTab('load-tab')">Load Mod</button>
+                    <button class="tab-btn" onclick="switchTab('examples-tab')">Examples</button>
+                    <button class="tab-btn" onclick="switchTab('loaded-tab')">Loaded</button>
+                </div>
+
+                <div id="load-tab" class="tab-content active">
+                    <div class="input-group">
+                        <label class="input-label">Paste Mod Code</label>
+                        <textarea class="textarea-field" id="mod-code" placeholder="Paste JavaScript mod code here..."></textarea>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="small-btn primary" onclick="loadModCode()">Load Mod</button>
+                        <button class="small-btn" onclick="importModFile()">Import File</button>
+                    </div>
+
+                    <div class="help-box">
+                        💡 Tip: Use ElementManager.register() to add elements. Mods can create custom UI buttons using addCustomButton()!
+                    </div>
+                </div>
+
+                <div id="examples-tab" class="tab-content">
+                    <div class="example-mod" onclick="loadExampleMod('behavior_demo')">
+                        <div class="example-mod-title">🎮 Behavior Grid Demo</div>
+                        <div class="example-mod-desc">Learn all behavior patterns</div>
+                    </div>
+                    
+                    <div class="example-mod" onclick="loadExampleMod('advanced_chemistry')">
+                        <div class="example-mod-title">⚗️ Advanced Chemistry</div>
+                        <div class="example-mod-desc">Complete reaction system</div>
+                    </div>
+                </div>
+
+                <div id="loaded-tab" class="tab-content">
+                    <div id="loaded-mods-list"></div>
+                    
+                    <div class="btn-group" style="margin-top: 12px;">
+                        <button class="small-btn" onclick="exportAllMods()">Export All</button>
+                        <button class="small-btn danger" onclick="clearAllMods()">Clear All</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">⚙️ Settings</div>
+                
+                <div class="slider-container">
+                    <label class="input-label">Brush Size:</label>
+                    <input type="range" min="1" max="20" value="3" 
+                           oninput="CONFIG.brushSize = parseInt(this.value); updateSliderValue('brush-val', this.value)">
+                    <span class="slider-value" id="brush-val">3</span>
+                </div>
+
+                <div class="slider-container">
+                    <label class="input-label">Pixel Scale:</label>
+                    <input type="range" min="3" max="8" value="5" 
+                           oninput="CONFIG.pixelScale = parseInt(this.value); updateSliderValue('scale-val', this.value); updateCanvasScale()">
+                    <span class="slider-value" id="scale-val">5</span>
+                </div>
+
+                <div class="slider-container">
+                    <label class="input-label">Sim Speed:</label>
+                    <input type="range" min="1" max="5" value="1" 
+                           oninput="CONFIG.simSpeed = parseInt(this.value); updateSliderValue('speed-val', this.value)">
+                    <span class="slider-value" id="speed-val">1</span>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <div class="checkbox-label">
+                    <input type="checkbox" id="show-temp" onchange="CONFIG.showTemp = this.checked">
+                    <label>Show Temperature</label>
+                </div>
+                
+                <div class="checkbox-label">
+                    <input type="checkbox" id="show-fps" checked onchange="CONFIG.showFPS = this.checked">
+                    <label>Show FPS</label>
+                </div>
+
+                <div class="checkbox-label">
+                    <input type="checkbox" id="heat-sim" checked onchange="CONFIG.heatSimulation = this.checked">
+                    <label>Heat Simulation</label>
+                </div>
+
+                <div class="checkbox-label">
+                    <input type="checkbox" id="pixel-variation" checked onchange="CONFIG.pixelVariation = this.checked">
+                    <label>Pixel Color Variation</label>
+                </div>
+
+                <div class="checkbox-label">
+                    <input type="checkbox" id="gas-effect" checked onchange="CONFIG.gasEffect = this.checked">
+                    <label>Gas Opacity Effect</label>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">📚 Element Manager</div>
+                
+                <div class="input-group">
+                    <input type="text" class="input-field" id="element-search" 
+                           placeholder="Search elements..." 
+                           oninput="filterElements(this.value)">
+                </div>
+
+                <div class="btn-group" style="margin-bottom: 10px;">
+                    <button class="small-btn" onclick="showElementList()">List All</button>
+                    <button class="small-btn" onclick="showElementStats()">Statistics</button>
+                </div>
+
+                <div id="element-manager-content"></div>
+            </div>
+        </div>
+
+        <div id="status-bar">
+            <div>
+                <span>FPS: <span class="status-value" id="fps">60</span></span>
+                <span style="margin-left: 20px;">Particles: <span class="status-value" id="particles">0</span></span>
+                <span style="margin-left: 20px;">Mods: <span class="status-value" id="mod-count">0</span></span>
+            </div>
+            <div>
+                <span>Element: <span class="status-value" id="current-element">sand</span></span>
+                <span style="margin-left: 20px;" id="pause-indicator"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="mod-banner">
+        <div class="banner-title">✨ Mod Loaded Successfully!</div>
+        <div class="banner-content" id="banner-content"></div>
+        <button class="banner-close" onclick="closeBanner()">OK</button>
+    </div>
+
+    <input type="file" id="file-input" accept=".js,.json,.txt" style="display: none;" onchange="handleFileImport(event)">
+
+    <script>
+        // ===== GLOBAL CONFIG =====
+        const CONFIG = {
+            gridWidth: 150,
+            gridHeight: 100,
+            pixelScale: 5,
+            brushSize: 3,
+            showTemp: false,
+            showFPS: true,
+            heatSimulation: true,
+            simSpeed: 1,
+            pixelVariation: true,
+            gasEffect: true
+        };
+
+        // ===== GLOBAL STATE =====
+        const elements = {};
+        const categories = {
+            solids: [],
+            powders: [],
+            liquids: [],
+            gases: [],
+            special: [],
+            tools: []
+        };
+
+        const loadedMods = [];
+        const customUIButtons = [];
+        let pixelTicks = 0;
+
+        // Behavior constants
+        const behaviors = {
+            POWDER: "POWDER",
+            LIQUID: "LIQUID",
+            GAS: "GAS",
+            SOLID: "SOLID",
+            STURDYPOWDER: "STURDYPOWDER",
+            MOLTEN: "MOLTEN",
+            CAUSTIC: "CAUSTIC"
+        };
+
+        // Rendering hooks
+        const renderHooks = {
+            prePixel: [],
+            eachPixel: [],
+            postPixel: []
+        };
+
+        function renderPrePixel(func) {
+            renderHooks.prePixel.push(func);
+        }
+
+        function renderEachPixel(func) {
+            renderHooks.eachPixel.push(func);
+        }
+
+        function renderPostPixel(func) {
+            renderHooks.postPixel.push(func);
+        }
+
+        // Custom UI function for mods
+        function addCustomButton(text, onclick, style = {}) {
+            const btn = document.createElement('button');
+            btn.className = 'action-btn';
+            btn.textContent = text;
+            btn.onclick = onclick;
+            Object.assign(btn.style, style);
+            
+            document.getElementById('custom-ui-buttons').appendChild(btn);
+            customUIButtons.push(btn);
+            
+            return btn;
+        }
+
+        // ===== PIXEL COLOR VARIATION SYSTEM =====
+        class ColorVariation {
+            static getVariedColor(baseColor, x, y, elementId) {
+                if (!CONFIG.pixelVariation) return baseColor;
+
+                // Use position-based seeded variation
+                const seed = x * 7919 + y * 7907 + elementId.charCodeAt(0);
+                const variation = ((seed % 20) - 10) / 100; // -0.1 to +0.1
+
+                const rgb = this.hexToRgb(baseColor);
+                
+                return this.rgbToHex({
+                    r: Math.max(0, Math.min(255, Math.floor(rgb.r * (1 + variation)))),
+                    g: Math.max(0, Math.min(255, Math.floor(rgb.g * (1 + variation)))),
+                    b: Math.max(0, Math.min(255, Math.floor(rgb.b * (1 + variation))))
+                });
+            }
+
+            static getGasOpacity(x, y, baseAlpha) {
+                if (!CONFIG.gasEffect) return baseAlpha;
+
+                // Perlin-like noise for smooth opacity variation
+                const noise = (Math.sin(x * 0.1 + pixelTicks * 0.05) * 
+                              Math.cos(y * 0.1 + pixelTicks * 0.03)) * 0.3;
+                
+                return Math.max(0.2, Math.min(1, baseAlpha + noise));
+            }
+
+            static hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 255, g: 255, b: 255 };
+            }
+
+            static rgbToHex(rgb) {
+                return "#" + ((1 << 24) + (rgb.r << 16) + (rgb.g << 8) + rgb.b).toString(16).slice(1);
+            }
+        }
+
+        // ===== BEHAVIOR PARSER =====
+        class BehaviorParser {
+            static parse(behaviorDef) {
+                if (Array.isArray(behaviorDef)) {
+                    if (typeof behaviorDef[0] === 'string') {
+                        return behaviorDef.map(row => row.split('|'));
+                    }
+                    return behaviorDef;
+                }
+                return null;
+            }
+
+            static parseRule(rule) {
+                if (!rule || rule === 'XX') return [{ type: 'XX' }];
+
+                const parts = rule.split(' AND ');
+                return parts.map(part => this.parseSingleRule(part.trim()));
+            }
+
+            static parseSingleRule(rule) {
+                let chance = 1.0;
+                const chanceMatch = rule.match(/(.+)%(\d+(?:\.\d+)?)/);
+                if (chanceMatch) {
+                    rule = chanceMatch[1];
+                    chance = parseFloat(chanceMatch[2]) / 100;
+                }
+
+                let params = null;
+                let params2 = null;
+                
+                const colonMatch = rule.match(/([A-Z0-9]+):(.+)/);
+                if (colonMatch) {
+                    const type = colonMatch[1];
+                    const paramStr = colonMatch[2];
+                    
+                    if (paramStr.includes('>')) {
+                        const [left, right] = paramStr.split('>');
+                        params = left.split(',').map(s => s.trim());
+                        params2 = right.split(',').map(s => s.trim());
+                    } else {
+                        params = paramStr.split(',').map(s => s.trim());
+                    }
+                    
+                    return { type, params, params2, chance };
+                }
+
+                return { type: rule, chance };
+            }
+        }
+
+        // ===== ENHANCED ELEMENT MANAGER =====
+        class ElementManager {
+            static register(def) {
+                const id = def.id || def.name?.toLowerCase().replace(/\s+/g, '_') || 'unknown';
+                
+                const element = {
+                    id: id,
+                    name: def.name || id,
+                    alias: def.alias,
+                    category: def.category || "special",
+                    desc: def.desc,
+                    color: def.color || "#ffffff",
+                    colorOn: def.colorOn,
+                    alpha: def.alpha,
+                    glow: def.glow,
+                    behavior: def.behavior || "SOLID",
+                    behaviorOn: def.behaviorOn,
+                    state: def.state || "solid",
+                    density: def.density !== undefined ? def.density : 1000,
+                    temp: def.temp !== undefined ? def.temp : 20,
+                    tempLow: def.tempLow,
+                    stateLow: def.stateLow,
+                    tempHigh: def.tempHigh,
+                    stateHigh: def.stateHigh,
+                    viscosity: def.viscosity,
+                    conduct: def.conduct,
+                    insulate: def.insulate,
+                    reactions: def.reactions || {},
+                    burn: def.burn,
+                    burning: def.burning,
+                    burnTime: def.burnTime,
+                    burnInto: def.burnInto,
+                    hidden: def.hidden,
+                    isFood: def.isFood,
+                    hardness: def.hardness,
+                    ignore: def.ignore || [],
+                    properties: def.properties,
+                    tick: def.tick,
+                    tool: def.tool,
+                    renderer: def.renderer,
+                    onPlace: def.onPlace,
+                    onDelete: def.onDelete,
+                    maxSize: def.maxSize
+                };
+
+                if (typeof element.behavior === 'function' && typeof element.tick === 'function') {
+                    element.tick1 = element.tick;
+                    element.tick2 = element.behavior;
+                    element.tick = function(pixel) {
+                        const oldId = pixel.id;
+                        element.tick1(pixel);
+                        if (pixel.id === oldId) {
+                            element.tick2(pixel);
+                        }
+                    };
+                    element.behavior = "SOLID";
+                }
+
+                elements[id] = element;
+
+                if (!categories[element.category]) {
+                    categories[element.category] = [];
+                }
+                if (!categories[element.category].includes(id)) {
+                    categories[element.category].push(id);
+                }
+
+                return element;
+            }
+
+            static get(id) {
+                return elements[id];
+            }
+
+            static exists(id) {
+                return !!elements[id];
+            }
+
+            static count() {
+                return Object.keys(elements).length;
+            }
+
+            static countReactions() {
+                let count = 0;
+                for (let elem of Object.values(elements)) {
+                    if (elem.reactions) {
+                        count += Object.keys(elem.reactions).length;
+                    }
+                }
+                return count;
+            }
+
+            static getAll() {
+                return Object.values(elements);
+            }
+
+            static search(query) {
+                query = query.toLowerCase();
+                return Object.values(elements).filter(elem => 
+                    elem.name.toLowerCase().includes(query) ||
+                    elem.id.toLowerCase().includes(query) ||
+                    (elem.alias && elem.alias.toLowerCase().includes(query))
+                );
+            }
+        }
+
+        // ===== HELPER FUNCTIONS =====
+        function tryMove(pixel, newX, newY) {
+            try {
+                if (!pixel || !sim.grid) return false;
+                const grid = sim.grid;
+                const oldX = pixel.x;
+                const oldY = pixel.y;
+                
+                if (newX < 0 || newX >= CONFIG.gridWidth || newY < 0 || newY >= CONFIG.gridHeight) {
+                    return false;
+                }
+                
+                const target = grid[newY][newX];
+                
+                if (!target) {
+                    grid[newY][newX] = pixel;
+                    grid[oldY][oldX] = null;
+                    pixel.x = newX;
+                    pixel.y = newY;
+                    return true;
+                }
+                
+                const elem1 = elements[pixel.id];
+                const elem2 = elements[target.id];
+                
+                if (elem1 && elem2 && elem1.density > elem2.density) {
+                    grid[newY][newX] = pixel;
+                    grid[oldY][oldX] = target;
+                    pixel.x = newX;
+                    pixel.y = newY;
+                    target.x = oldX;
+                    target.y = oldY;
+                    return true;
+                }
+                
+                return false;
+            } catch (e) {
+                console.error('tryMove error:', e);
+                return false;
+            }
+        }
+
+        function isEmpty(x, y) {
+            try {
+                if (x < 0 || x >= CONFIG.gridWidth || y < 0 || y >= CONFIG.gridHeight) return false;
+                return !sim.grid[y][x];
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function changePixel(pixel, newElement) {
+            try {
+                if (!pixel || !elements[newElement]) return;
+                const oldId = pixel.id;
+                const elem = elements[newElement];
+                
+                const oldElem = elements[oldId];
+                if (oldElem && oldElem.onChange) {
+                    oldElem.onChange(pixel);
+                }
+                
+                pixel.id = elem.id;
+                pixel.temp = elem.temp;
+                
+                if (elem.properties) {
+                    for (let prop in elem.properties) {
+                        pixel[prop] = elem.properties[prop];
+                    }
+                }
+            } catch (e) {
+                console.error('changePixel error:', e);
+            }
+        }
+
+        function deletePixel(pixel) {
+            try {
+                if (!pixel || !sim.grid) return;
+                
+                const elem = elements[pixel.id];
+                if (elem && elem.onDelete) {
+                    elem.onDelete(pixel);
+                }
+                
+                if (pixel.y >= 0 && pixel.y < sim.grid.length && pixel.x >= 0 && pixel.x < sim.grid[0].length) {
+                    sim.grid[pixel.y][pixel.x] = null;
+                }
+            } catch (e) {
+                console.error('deletePixel error:', e);
+            }
+        }
+
+        function createPixel(elementId, x, y) {
+            try {
+                if (x < 0 || x >= CONFIG.gridWidth || y < 0 || y >= CONFIG.gridHeight) return null;
+                if (sim.grid[y][x]) return null;
+                
+                const elem = elements[elementId];
+                if (!elem) return null;
+                
+                const pixel = {
+                    id: elem.id,
+                    temp: elem.temp,
+                    life: 0,
+                    x: x,
+                    y: y
+                };
+
+                if (elem.properties) {
+                    for (let prop in elem.properties) {
+                        pixel[prop] = elem.properties[prop];
+                    }
+                }
+
+                if (elem.charge !== undefined) {
+                    pixel.charge = elem.charge;
+                }
+
+                if (elem.burning) {
+                    pixel.burning = true;
+                    pixel.burnStart = pixelTicks;
+                }
+                
+                sim.grid[y][x] = pixel;
+
+                if (elem.onPlace) {
+                    elem.onPlace(pixel);
+                }
+                
+                return pixel;
+            } catch (e) {
+                console.error('createPixel error:', e);
+                return null;
+            }
+        }
+
+        function getPixel(x, y) {
+            try {
+                if (x < 0 || x >= CONFIG.gridWidth || y < 0 || y >= CONFIG.gridHeight) return null;
+                return sim.grid[y][x];
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function drawSquare(ctx, color, x, y) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 1, 1);
+        }
+
+        function pixelTempCheck(pixel) {
+            try {
+                if (!pixel) return;
+                const elem = elements[pixel.id];
+                if (!elem) return;
+
+                if (elem.tempHigh !== undefined && pixel.temp >= elem.tempHigh && elem.stateHigh) {
+                    changePixel(pixel, elem.stateHigh);
+                }
+                else if (elem.tempLow !== undefined && pixel.temp <= elem.tempLow && elem.stateLow) {
+                    changePixel(pixel, elem.stateLow);
+                }
+            } catch (e) {
+                console.error('pixelTempCheck error:', e);
+            }
+        }
+
+        // ===== BEHAVIOR MANAGER =====
+        class BehaviorManager {
+            static apply(x, y, grid) {
+                try {
+                    const pixel = grid[y][x];
+                    if (!pixel) return;
+
+                    pixel.x = x;
+                    pixel.y = y;
+
+                    const elem = elements[pixel.id];
+                    if (!elem) return;
+
+                    if (pixel.burning) {
+                        this.handleBurning(pixel, elem);
+                    }
+
+                    if (elem.tick) {
+                        try {
+                            elem.tick(pixel);
+                        } catch (e) {
+                            console.error(`Tick error for ${elem.id}:`, e);
+                        }
+                    }
+
+                    if (typeof elem.behavior === 'function') {
+                        elem.behavior(pixel);
+                    } else if (typeof elem.behavior === 'string') {
+                        this.applyStringBehavior(elem.behavior, x, y, grid);
+                    } else if (Array.isArray(elem.behavior)) {
+                        this.applyGridBehavior(pixel, elem.behavior, grid);
+                    }
+                } catch (e) {
+                    console.error('Behavior apply error:', e);
+                }
+            }
+
+            static applyStringBehavior(behavior, x, y, grid) {
+                switch (behavior) {
+                    case 'POWDER':
+                    case 'STURDYPOWDER':
+                        this.powder(x, y, grid);
+                        break;
+                    case 'LIQUID':
+                        this.liquid(x, y, grid);
+                        break;
+                    case 'GAS':
+                        this.gas(x, y, grid);
+                        break;
+                    case 'MOLTEN':
+                        this.molten(x, y, grid);
+                        break;
+                    case 'CAUSTIC':
+                        this.caustic(x, y, grid);
+                        break;
+                }
+            }
+
+            static applyGridBehavior(pixel, behaviorGrid, grid) {
+                const parsed = BehaviorParser.parse(behaviorGrid);
+                if (!parsed) return;
+
+                let moved = false;
+                let m1Positions = [];
+                let m2Positions = [];
+                
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        const gridY = dy + 1;
+                        const gridX = dx + 1;
+                        const ruleStr = parsed[gridY][gridX];
+                        const rules = BehaviorParser.parseRule(ruleStr);
+                        
+                        if (!Array.isArray(rules)) continue;
+
+                        for (let rule of rules) {
+                            if (Math.random() > rule.chance) continue;
+
+                            const tx = pixel.x + dx;
+                            const ty = pixel.y + dy;
+
+                            switch (rule.type) {
+                                case 'M1':
+                                    m1Positions.push({ x: tx, y: ty });
+                                    break;
+                                case 'M2':
+                                    m2Positions.push({ x: tx, y: ty });
+                                    break;
+                                case 'DL':
+                                    this.executeDelete(tx, ty, rule, grid);
+                                    break;
+                                case 'DB':
+                                    this.executeDeleteBoth(pixel, tx, ty, rule, grid);
+                                    break;
+                                case 'CL':
+                                    this.executeClone(pixel, tx, ty, grid);
+                                    break;
+                                case 'CH':
+                                    this.executeChange(tx, ty, rule, grid);
+                                    break;
+                                case 'CR':
+                                    this.executeCreate(pixel, tx, ty, rule, grid);
+                                    break;
+                                case 'SW':
+                                    this.executeSwap(pixel, tx, ty, rule, grid);
+                                    break;
+                                case 'HT':
+                                    this.executeHeat(tx, ty, rule, grid);
+                                    break;
+                                case 'CO':
+                                    this.executeCool(tx, ty, rule, grid);
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                if (m1Positions.length > 0) {
+                    const pos = m1Positions[Math.floor(Math.random() * m1Positions.length)];
+                    if (this.tryMoveInternal(pixel.x, pixel.y, pos.x, pos.y, grid)) {
+                        moved = true;
+                    }
+                }
+
+                if (!moved && m2Positions.length > 0) {
+                    const pos = m2Positions[Math.floor(Math.random() * m2Positions.length)];
+                    this.tryMoveInternal(pixel.x, pixel.y, pos.x, pos.y, grid);
+                }
+            }
+
+            static executeDelete(x, y, rule, grid) {
+                if (!this.inBounds(x, y, grid)) return;
+                const target = grid[y][x];
+                if (!target) return;
+
+                if (rule.params) {
+                    if (rule.params.includes(target.id)) {
+                        deletePixel(target);
+                    }
+                } else {
+                    deletePixel(target);
+                }
+            }
+
+            static executeDeleteBoth(pixel, x, y, rule, grid) {
+                if (!this.inBounds(x, y, grid)) return;
+                const target = grid[y][x];
+                if (target) {
+                    deletePixel(target);
+                }
+                deletePixel(pixel);
+            }
+
+            static executeClone(pixel, x, y, grid) {
+                if (!this.inBounds(x, y, grid)) return;
+                if (grid[y][x]) return;
+                createPixel(pixel.id, x, y);
+            }
+
+            static executeChange(x, y, rule, grid) {
+                if (!this.inBounds(x, y, grid)) return;
+                const target = grid[y][x];
+                if (!target) return;
+
+                let targetElements = rule.params;
+                let resultElements = rule.params2 || rule.params;
+
+                if (rule.params2) {
+                    if (!targetElements.includes(target.id)) return;
+                }
+
+                const newElement = resultElements[Math.floor(Math.random() * resultElements.length)];
+                changePixel(target, newElement);
+            }
+
+            static executeCreate(pixel, x, y, rule, grid) {
+                if (!this.inBounds(x, y, grid)) return;
+                if (grid[y][x]) return;
+
+                let element = pixel.id;
+                if (rule.params && rule.params.length > 0) {
+                    element = rule.params[Math.floor(Math.random() * rule.params.length)];
+                }
+                
+                createPixel(element, x, y);
+            }
+
+            static executeSwap(pixel, x, y, rule, grid) {
+                if (!this.inBounds(x, y, grid)) return;
+                const target = grid[y][x];
+                if (!target) return;
+
+                if (rule.params) {
+                    if (!rule.params.includes(target.id)) return;
+                }
+
+                grid[pixel.y][pixel.x] = target;
+                grid[y][x] = pixel;
+                
+                const tempX = pixel.x;
+                const tempY = pixel.y;
+                pixel.x = x;
+                pixel.y = y;
+                target.x = tempX;
+                target.y = tempY;
+            }
+
+            static executeHeat(x, y, rule, grid) {
+                if (!this.inBounds(x, y, grid)) return;
+                const target = grid[y][x];
+                if (!target) return;
+
+                const amount = rule.params && !isNaN(rule.params[0]) ? parseFloat(rule.params[0]) : 1;
+                target.temp = Math.min(target.temp + amount, 2000);
+                pixelTempCheck(target);
+            }
+
+            static executeCool(x, y, rule, grid) {
+                if (!this.inBounds(x, y, grid)) return;
+                const target = grid[y][x];
+                if (!target) return;
+
+                const amount = rule.params && !isNaN(rule.params[0]) ? parseFloat(rule.params[0]) : 1;
+                target.temp = Math.max(target.temp - amount, -273);
+                pixelTempCheck(target);
+            }
+
+            static powder(x, y, grid) {
+                if (this.tryMoveInternal(x, y, x, y + 1, grid)) return;
+                const dir = Math.random() < 0.5 ? -1 : 1;
+                if (this.tryMoveInternal(x, y, x + dir, y + 1, grid)) return;
+                this.tryMoveInternal(x, y, x - dir, y + 1, grid);
+            }
+
+            static liquid(x, y, grid) {
+                if (this.tryMoveInternal(x, y, x, y + 1, grid)) return;
+                const dir = Math.random() < 0.5 ? -1 : 1;
+                if (this.tryMoveInternal(x, y, x + dir, y + 1, grid)) return;
+                if (this.tryMoveInternal(x, y, x - dir, y + 1, grid)) return;
+                if (Math.random() < 0.5) {
+                    if (this.tryMoveInternal(x, y, x + dir, y, grid)) return;
+                    this.tryMoveInternal(x, y, x - dir, y, grid);
+                }
+            }
+
+            static gas(x, y, grid) {
+                if (this.tryMoveInternal(x, y, x, y - 1, grid)) return;
+                const dir = Math.random() < 0.5 ? -1 : 1;
+                if (Math.random() < 0.3) {
+                    if (this.tryMoveInternal(x, y, x + dir, y - 1, grid)) return;
+                }
+                if (Math.random() < 0.5) {
+                    this.tryMoveInternal(x, y, x + dir, y, grid);
+                }
+            }
+
+            static molten(x, y, grid) {
+                this.liquid(x, y, grid);
+                const pixel = grid[y][x];
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (this.inBounds(nx, ny, grid) && grid[ny][nx]) {
+                            grid[ny][nx].temp = Math.min(grid[ny][nx].temp + 10, 2000);
+                        }
+                    }
+                }
+            }
+
+            static caustic(x, y, grid) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        if (dx === 0 && dy === 0) continue;
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (this.inBounds(nx, ny, grid) && grid[ny][nx] && Math.random() < 0.05) {
+                            grid[ny][nx] = null;
+                        }
+                    }
+                }
+            }
+
+            static handleBurning(pixel, elem) {
+                pixel.burnTime = (pixel.burnTime || 0) + 1;
+                if (elem.burnTime && pixel.burnTime > elem.burnTime) {
+                    if (elem.burnInto) {
+                        changePixel(pixel, elem.burnInto);
+                    } else {
+                        deletePixel(pixel);
+                    }
+                    return;
+                }
+                if (Math.random() < 0.3) {
+                    const fireElem = elem.fireElement || 'fire';
+                    const fx = pixel.x + (Math.random() < 0.5 ? -1 : 1);
+                    const fy = pixel.y - 1;
+                    if (isEmpty(fx, fy)) {
+                        createPixel(fireElem, fx, fy);
+                    }
+                }
+            }
+
+            static tryMoveInternal(x1, y1, x2, y2, grid) {
+                if (!this.inBounds(x2, y2, grid)) return false;
+                
+                const pixel1 = grid[y1][x1];
+                const pixel2 = grid[y2][x2];
+                
+                if (!pixel2) {
+                    grid[y2][x2] = pixel1;
+                    grid[y1][x1] = null;
+                    if (pixel1) {
+                        pixel1.x = x2;
+                        pixel1.y = y2;
+                    }
+                    return true;
+                }
+                
+                const elem1 = elements[pixel1.id];
+                const elem2 = elements[pixel2.id];
+                
+                if (elem1 && elem2) {
+                    if (elem1.ignore && elem1.ignore.includes(pixel2.id)) return false;
+                    
+                    if (elem1.density > elem2.density) {
+                        grid[y2][x2] = pixel1;
+                        grid[y1][x1] = pixel2;
+                        if (pixel1) { pixel1.x = x2; pixel1.y = y2; }
+                        if (pixel2) { pixel2.x = x1; pixel2.y = y1; }
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+
+            static inBounds(x, y, grid) {
+                return y >= 0 && y < grid.length && x >= 0 && x < grid[0].length;
+            }
+        }
+
+        // ===== REACTION MANAGER =====
+        class ReactionManager {
+            static check(x, y, grid) {
+                try {
+                    const pixel = grid[y][x];
+                    if (!pixel) return;
+
+                    const elem = elements[pixel.id];
+                    if (!elem || !elem.reactions) return;
+
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+                            
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            
+                            if (!BehaviorManager.inBounds(nx, ny, grid)) continue;
+                            
+                            const neighbor = grid[ny][nx];
+                            if (!neighbor) continue;
+
+                            const reaction = elem.reactions[neighbor.id];
+                            if (!reaction) continue;
+
+                            if (reaction.chance !== undefined && Math.random() > reaction.chance) continue;
+
+                            this.executeReaction(pixel, neighbor, reaction, x, y, nx, ny, grid);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Reaction error:', e);
+                }
+            }
+
+            static executeReaction(pixel1, pixel2, reaction, x1, y1, x2, y2, grid) {
+                if (reaction.func) {
+                    reaction.func(pixel1, pixel2);
+                }
+
+                if (reaction.elem1 !== undefined) {
+                    if (reaction.elem1 === null) {
+                        grid[y1][x1] = null;
+                    } else if (Array.isArray(reaction.elem1)) {
+                        const choice = reaction.elem1[Math.floor(Math.random() * reaction.elem1.length)];
+                        changePixel(pixel1, choice);
+                    } else {
+                        changePixel(pixel1, reaction.elem1);
+                    }
+
+                    if (pixel1 && reaction.temp1 !== undefined) {
+                        pixel1.temp = reaction.temp1;
+                    }
+                }
+
+                if (reaction.elem2 !== undefined) {
+                    if (reaction.elem2 === null) {
+                        grid[y2][x2] = null;
+                    } else if (Array.isArray(reaction.elem2)) {
+                        const choice = reaction.elem2[Math.floor(Math.random() * reaction.elem2.length)];
+                        changePixel(pixel2, choice);
+                    } else {
+                        changePixel(pixel2, reaction.elem2);
+                    }
+
+                    if (pixel2 && reaction.temp2 !== undefined) {
+                        pixel2.temp = reaction.temp2;
+                    }
+                }
+            }
+        }
+
+        // ===== HEAT SIMULATION =====
+        class HeatSimulation {
+            static simulate(grid) {
+                if (!CONFIG.heatSimulation) return;
+
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.floor(Math.random() * CONFIG.gridWidth);
+                    const y = Math.floor(Math.random() * CONFIG.gridHeight);
+                    const pixel = grid[y][x];
+                    
+                    if (!pixel) continue;
+                    const elem = elements[pixel.id];
+                    if (!elem || elem.insulate) continue;
+
+                    let totalTemp = pixel.temp;
+                    let count = 1;
+
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            if (nx >= 0 && nx < CONFIG.gridWidth && ny >= 0 && ny < CONFIG.gridHeight) {
+                                const neighbor = grid[ny][nx];
+                                if (neighbor) {
+                                    const nelem = elements[neighbor.id];
+                                    if (nelem && !nelem.insulate) {
+                                        totalTemp += neighbor.temp;
+                                        count++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    const avgTemp = totalTemp / count;
+                    pixel.temp += (avgTemp - pixel.temp) * 0.1;
+
+                    pixelTempCheck(pixel);
+                }
+            }
+        }
+
+        // ===== SIMULATION =====
+        class Simulation {
+            constructor() {
+                this.grid = Array(CONFIG.gridHeight).fill(null).map(() => 
+                    Array(CONFIG.gridWidth).fill(null)
+                );
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.canvas.width = CONFIG.gridWidth;
+                this.canvas.height = CONFIG.gridHeight;
+                this.updateCanvasScale();
+                
+                this.imageData = this.ctx.createImageData(CONFIG.gridWidth, CONFIG.gridHeight);
+                
+                this.lastTime = performance.now();
+                this.fps = 60;
+                this.frameCount = 0;
+                this.pause = false;
+            }
+
+            updateCanvasScale() {
+                this.canvas.style.width = (CONFIG.gridWidth * CONFIG.pixelScale) + 'px';
+                this.canvas.style.height = (CONFIG.gridHeight * CONFIG.pixelScale) + 'px';
+            }
+
+            step() {
+                try {
+                    if (this.pause) return;
+
+                    pixelTicks++;
+
+                    const pixels = [];
+                    for (let y = 0; y < CONFIG.gridHeight; y++) {
+                        for (let x = 0; x < CONFIG.gridWidth; x++) {
+                            if (this.grid[y][x]) {
+                                pixels.push([x, y]);
+                            }
+                        }
+                    }
+
+                    for (let i = pixels.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [pixels[i], pixels[j]] = [pixels[j], pixels[i]];
+                    }
+
+                    for (let step = 0; step < CONFIG.simSpeed; step++) {
+                        pixels.forEach(([x, y]) => {
+                            if (this.grid[y][x]) {
+                                BehaviorManager.apply(x, y, this.grid);
+                                ReactionManager.check(x, y, this.grid);
+                            }
+                        });
+                    }
+
+                    HeatSimulation.simulate(this.grid);
+
+                } catch (e) {
+                    console.error('Simulation step error:', e);
+                }
+            }
+
+            draw() {
+                try {
+                    const data = this.imageData.data;
+
+                    renderHooks.prePixel.forEach(func => {
+                        try {
+                            func(this.ctx);
+                        } catch (e) {
+                            console.error('Pre-render hook error:', e);
+                        }
+                    });
+
+                    for (let y = 0; y < CONFIG.gridHeight; y++) {
+                        for (let x = 0; x < CONFIG.gridWidth; x++) {
+                            const pixel = this.grid[y][x];
+                            const index = (y * CONFIG.gridWidth + x) * 4;
+
+                            if (pixel) {
+                                const elem = elements[pixel.id];
+                                
+                                if (elem && elem.renderer) {
+                                    try {
+                                        elem.renderer(pixel, this.ctx);
+                                        continue;
+                                    } catch (e) {
+                                        console.error('Custom renderer error:', e);
+                                    }
+                                }
+
+                                renderHooks.eachPixel.forEach(func => {
+                                    try {
+                                        func(pixel, this.ctx);
+                                    } catch (e) {
+                                        console.error('Each-pixel hook error:', e);
+                                    }
+                                });
+
+                                let color = pixel.color || (elem ? elem.color : "#ffffff");
+                                
+                                if (Array.isArray(color)) {
+                                    if (!pixel.colorIndex) {
+                                        pixel.colorIndex = Math.floor(Math.random() * color.length);
+                                    }
+                                    color = color[pixel.colorIndex];
+                                }
+
+                                // Apply color variation
+                                if (CONFIG.pixelVariation) {
+                                    color = ColorVariation.getVariedColor(color, x, y, pixel.id);
+                                }
+
+                                // Temperature visualization
+                                let rgb;
+                                if (CONFIG.showTemp && pixel.temp !== undefined) {
+                                    const tempDiff = pixel.temp - 20;
+                                    rgb = this.hexToRgb(color);
+                                    
+                                    if (tempDiff > 0) {
+                                        const heat = Math.min(255, tempDiff * 2);
+                                        data[index] = Math.min(255, rgb.r + heat);
+                                        data[index + 1] = Math.max(0, rgb.g - heat / 2);
+                                        data[index + 2] = Math.max(0, rgb.b - heat / 2);
+                                    } else if (tempDiff < 0) {
+                                        const cold = Math.min(255, Math.abs(tempDiff) * 2);
+                                        data[index] = Math.max(0, rgb.r - cold / 2);
+                                        data[index + 1] = Math.max(0, rgb.g - cold / 2);
+                                        data[index + 2] = Math.min(255, rgb.b + cold);
+                                    } else {
+                                        data[index] = rgb.r;
+                                        data[index + 1] = rgb.g;
+                                        data[index + 2] = rgb.b;
+                                    }
+                                } else {
+                                    rgb = this.hexToRgb(color);
+                                    data[index] = rgb.r;
+                                    data[index + 1] = rgb.g;
+                                    data[index + 2] = rgb.b;
+                                }
+
+                                // Alpha with gas effect
+                                let alpha = elem?.alpha !== undefined ? elem.alpha * 255 : 255;
+                                
+                                if (CONFIG.gasEffect && elem?.state === 'gas') {
+                                    const gasAlpha = ColorVariation.getGasOpacity(x, y, elem.alpha || 1);
+                                    alpha = gasAlpha * 255;
+                                }
+                                
+                                data[index + 3] = alpha;
+
+                                // Glow effect
+                                if (elem?.glow || pixel.glow) {
+                                    data[index] = Math.min(255, data[index] * 1.3);
+                                    data[index + 1] = Math.min(255, data[index + 1] * 1.3);
+                                    data[index + 2] = Math.min(255, data[index + 2] * 1.3);
+                                }
+                            } else {
+                                data[index] = 10;
+                                data[index + 1] = 10;
+                                data[index + 2] = 10;
+                                data[index + 3] = 255;
+                            }
+                        }
+                    }
+
+                    this.ctx.putImageData(this.imageData, 0, 0);
+
+                    renderHooks.postPixel.forEach(func => {
+                        try {
+                            func(this.ctx);
+                        } catch (e) {
+                            console.error('Post-render hook error:', e);
+                        }
+                    });
+
+                    this.frameCount++;
+                    const now = performance.now();
+                    if (now - this.lastTime >= 1000) {
+                        this.fps = this.frameCount;
+                        this.frameCount = 0;
+                        this.lastTime = now;
+                        if (CONFIG.showFPS) {
+                            document.getElementById('fps').textContent = this.fps;
+                        }
+                    }
+
+                    let count = 0;
+                    for (let y = 0; y < CONFIG.gridHeight; y++) {
+                        for (let x = 0; x < CONFIG.gridWidth; x++) {
+                            if (this.grid[y][x]) count++;
+                        }
+                    }
+                    document.getElementById('particles').textContent = count;
+
+                    document.getElementById('pause-indicator').textContent = this.pause ? '⏸️ PAUSED' : '';
+
+                } catch (e) {
+                    console.error('Draw error:', e);
+                }
+            }
+
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 255, g: 255, b: 255 };
+            }
+
+            clear() {
+                this.grid = Array(CONFIG.gridHeight).fill(null).map(() => 
+                    Array(CONFIG.gridWidth).fill(null)
+                );
+            }
+
+            setPixel(x, y, elementId) {
+                if (x < 0 || x >= CONFIG.gridWidth || y < 0 || y >= CONFIG.gridHeight) return;
+                
+                const elem = elements[elementId];
+                if (!elem) return;
+
+                const pixel = {
+                    id: elem.id,
+                    temp: elem.temp,
+                    life: 0,
+                    x: x,
+                    y: y
+                };
+
+                if (elem.properties) {
+                    Object.assign(pixel, elem.properties);
+                }
+
+                if (elem.charge !== undefined) {
+                    pixel.charge = elem.charge;
+                }
+
+                if (elem.burning) {
+                    pixel.burning = true;
+                    pixel.burnStart = pixelTicks;
+                }
+
+                this.grid[y][x] = pixel;
+
+                if (elem.onPlace) {
+                    elem.onPlace(pixel);
+                }
+            }
+        }
+
+        // ===== DEFAULT ELEMENTS =====
+        function registerDefaults() {
+            ElementManager.register({
+                id: "sand",
+                name: "Sand",
+                color: "#f4a460",
+                category: "powders",
+                behavior: "POWDER",
+                state: "solid",
+                density: 1500,
+                temp: 20,
+                desc: "Common granular material"
+            });
+
+            ElementManager.register({
+                id: "water",
+                name: "Water",
+                alias: "H2O",
+                color: "#3388ff",
+                category: "liquids",
+                behavior: "LIQUID",
+                state: "liquid",
+                density: 1000,
+                temp: 25,
+                tempLow: 0,
+                stateLow: "ice",
+                tempHigh: 100,
+                stateHigh: "steam",
+                desc: "Essential liquid for life",
+                reactions: {
+                    fire: { elem2: null, chance: 0.3 }
+                }
+            });
+
+            ElementManager.register({
+                id: "ice",
+                name: "Ice",
+                color: "#b0e0ff",
+                category: "solids",
+                behavior: "SOLID",
+                state: "solid",
+                density: 917,
+                temp: -10,
+                tempHigh: 0,
+                stateHigh: "water",
+                desc: "Frozen water"
+            });
+
+            ElementManager.register({
+                id: "steam",
+                name: "Steam",
+                color: "#e0e0e0",
+                category: "gases",
+                behavior: "GAS",
+                state: "gas",
+                density: 0.6,
+                temp: 100,
+                alpha: 0.6,
+                tempLow: 50,
+                stateLow: "water",
+                desc: "Water vapor"
+            });
+
+            ElementManager.register({
+                id: "stone",
+                name: "Stone",
+                color: "#808080",
+                category: "solids",
+                behavior: "SOLID",
+                state: "solid",
+                density: 2500,
+                temp: 20,
+                tempHigh: 1200,
+                stateHigh: "lava",
+                hardness: 0.9,
+                desc: "Hard solid rock"
+            });
+
+            ElementManager.register({
+                id: "lava",
+                name: "Lava",
+                color: ["#ff4400", "#ff6600", "#ff8800"],
+                category: "liquids",
+                behavior: "MOLTEN",
+                state: "liquid",
+                density: 3100,
+                temp: 1200,
+                glow: true,
+                tempLow: 800,
+                stateLow: "stone",
+                desc: "Molten rock",
+                reactions: {
+                    water: { elem1: "stone", elem2: "steam", chance: 0.5 }
+                }
+            });
+
+            ElementManager.register({
+                id: "fire",
+                name: "Fire",
+                color: ["#ff6600", "#ff8800", "#ffaa00"],
+                category: "special",
+                behavior: "GAS",
+                state: "gas",
+                density: 0.1,
+                temp: 600,
+                glow: true,
+                alpha: 0.8,
+                desc: "Burning plasma",
+                tick: function(pixel) {
+                    pixel.life = (pixel.life || 0) + 1;
+                    if (pixel.life > 30 || Math.random() < 0.1) {
+                        if (Math.random() < 0.3) {
+                            changePixel(pixel, "smoke");
+                        } else {
+                            deletePixel(pixel);
+                        }
+                    }
+                }
+            });
+
+            ElementManager.register({
+                id: "smoke",
+                name: "Smoke",
+                color: "#606060",
+                category: "gases",
+                behavior: "GAS",
+                state: "gas",
+                density: 0.6,
+                temp: 80,
+                alpha: 0.5,
+                desc: "Combustion product"
+            });
+
+            ElementManager.register({
+                id: "oil",
+                name: "Oil",
+                color: "#442200",
+                category: "liquids",
+                behavior: "LIQUID",
+                state: "liquid",
+                density: 900,
+                temp: 20,
+                burn: 5,
+                burnTime: 100,
+                desc: "Flammable liquid",
+                reactions: {
+                    fire: { elem1: "fire", chance: 0.8 }
+                }
+            });
+
+            ElementManager.register({
+                id: "oxygen",
+                name: "Oxygen",
+                alias: "O2",
+                color: "#ccddff",
+                category: "gases",
+                behavior: "GAS",
+                state: "gas",
+                density: 1.3,
+                temp: 20,
+                alpha: 0.4,
+                desc: "Breathable gas"
+            });
+        }
+
+        // ===== MOD CONFIG SYSTEM =====
+        class ModConfig {
+            static create(config) {
+                return {
+                    modId: config.modId || `mod_${Date.now()}`,
+                    modName: config.modName || "Unnamed Mod",
+                    author: config.author || "Unknown",
+                    version: config.version || "1.0",
+                    description: config.description || "No description provided",
+                    elements: config.elements || [],
+                    loadedAt: new Date().toISOString()
+                };
+            }
+
+            static show(mod) {
+                const banner = document.getElementById('mod-banner');
+                const content = document.getElementById('banner-content');
+                
+                content.innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color: #4a90e2;">Name:</strong> ${mod.modName}<br>
+                        <strong style="color: #4a90e2;">ID:</strong> ${mod.modId}<br>
+                        <strong style="color: #4a90e2;">Author:</strong> ${mod.author}<br>
+                        <strong style="color: #4a90e2;">Version:</strong> ${mod.version}
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color: #4a90e2;">Description:</strong><br>
+                        ${mod.description}
+                    </div>
+                    <div style="color: #888;">
+                        Elements added: ${mod.elements ? mod.elements.length : 0}
+                    </div>
+                `;
+                
+                banner.classList.add('active');
+                
+                setTimeout(() => {
+                    banner.classList.remove('active');
+                }, 12000);
+            }
+        }
+
+        function closeBanner() {
+            document.getElementById('mod-banner').classList.remove('active');
+        }
+
+        // ===== UI FUNCTIONS =====
+        function buildPalette() {
+            const palette = document.getElementById('palette');
+            palette.innerHTML = '';
+
+            for (const [category, elementIds] of Object.entries(categories)) {
+                if (elementIds.length === 0) continue;
+
+                const catDiv = document.createElement('div');
+                catDiv.className = 'category';
+
+                const title = document.createElement('div');
+                title.className = 'category-title expanded';
+                title.textContent = category.toUpperCase();
+                
+                const elementsDiv = document.createElement('div');
+                elementsDiv.className = 'category-elements';
+
+                title.onclick = () => {
+                    title.classList.toggle('collapsed');
+                    title.classList.toggle('expanded');
+                    elementsDiv.classList.toggle('collapsed');
+                };
+
+                catDiv.appendChild(title);
+
+                elementIds.forEach(elemId => {
+                    const elem = elements[elemId];
+                    if (!elem || elem.hidden) return;
+
+                    const btn = document.createElement('button');
+                    btn.className = 'element-btn';
+                    if (elemId === currentElement) btn.classList.add('selected');
+
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'element-color';
+                    const displayColor = Array.isArray(elem.color) ? elem.color[0] : elem.color;
+                    colorBox.style.background = displayColor;
+
+                    const info = document.createElement('div');
+                    info.className = 'element-info';
+                    
+                    const name = document.createElement('div');
+                    name.textContent = elem.name;
+                    info.appendChild(name);
+
+                    if (elem.alias) {
+                        const alias = document.createElement('div');
+                        alias.className = 'element-alias';
+                        alias.textContent = elem.alias;
+                        info.appendChild(alias);
+                    }
+
+                    btn.appendChild(colorBox);
+                    btn.appendChild(info);
+
+                    btn.onclick = () => {
+                        currentElement = elemId;
+                        document.querySelectorAll('.element-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        document.getElementById('current-element').textContent = elem.name;
+
+                        if (elem.onSelect) {
+                            elem.onSelect();
+                        }
+                    };
+
+                    elementsDiv.appendChild(btn);
+                });
+
+                catDiv.appendChild(elementsDiv);
+                palette.appendChild(catDiv);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function updateModList() {
+            const list = document.getElementById('loaded-mods-list');
+            list.innerHTML = '';
+
+            if (loadedMods.length === 0) {
+                list.innerHTML = '<div style="font-size: 7px; color: #666; padding: 15px; text-align: center;">No mods loaded yet</div>';
+                document.getElementById('mod-count').textContent = '0';
+                return;
+            }
+
+            loadedMods.forEach((mod, index) => {
+                const item = document.createElement('div');
+                item.className = 'mod-item';
+                
+                item.innerHTML = `
+                    <div class="mod-header">
+                        <div class="mod-name">${mod.modName}</div>
+                    </div>
+                    <div class="mod-id">ID: ${mod.modId}</div>
+                    <div class="mod-desc">${mod.description}</div>
+                    <div style="font-size: 6px; color: #666; margin: 4px 0;">
+                        Author: ${mod.author} | Version: ${mod.version}
+                    </div>
+                    <div class="mod-actions">
+                        <button class="tiny-btn" onclick="viewModInfo(${index})">Info</button>
+                        <button class="tiny-btn" onclick="exportMod(${index})">Export</button>
+                        <button class="tiny-btn danger" onclick="deleteMod(${index})">Delete</button>
+                    </div>
+                `;
+                
+                list.appendChild(item);
+            });
+
+            document.getElementById('mod-count').textContent = loadedMods.length;
+        }
+
+        function loadModCode() {
+            const code = document.getElementById('mod-code').value.trim();
+            if (!code) {
+                alert('⚠️ Please paste mod code first!');
+                return;
+            }
+
+            try {
+                const modFunction = new Function(
+                    'ModConfig', 'elements', 'ElementManager', 'behaviors',
+                    'renderPrePixel', 'renderEachPixel', 'renderPostPixel',
+                    'tryMove', 'isEmpty', 'changePixel', 'deletePixel', 'createPixel', 'getPixel', 'pixelTempCheck',
+                    'addCustomButton', 'CONFIG',
+                    code + '\nreturn typeof modConfig !== "undefined" ? modConfig : null;'
+                );
+                
+                const modConfig = modFunction(
+                    ModConfig, elements, ElementManager, behaviors,
+                    renderPrePixel, renderEachPixel, renderPostPixel,
+                    tryMove, isEmpty, changePixel, deletePixel, createPixel, getPixel, pixelTempCheck,
+                    addCustomButton, CONFIG
+                );
+
+                if (modConfig) {
+                    const mod = ModConfig.create(modConfig);
+                    loadedMods.push(mod);
+                    ModConfig.show(mod);
+                    updateModList();
+                    buildPalette();
+                    document.getElementById('mod-code').value = '';
+                    console.log('✅ Mod loaded:', mod.modName);
+                } else {
+                    alert('⚠️ Mod loaded but no modConfig found. Elements may still be registered.');
+                    buildPalette();
+                }
+            } catch (e) {
+                alert('❌ Error loading mod:\n' + e.message);
+                console.error('Mod loading error:', e);
+            }
+        }
+
+        function importModFile() {
+            document.getElementById('file-input').click();
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('mod-code').value = e.target.result;
+                loadModCode();
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function viewModInfo(index) {
+            const mod = loadedMods[index];
+            if (mod) {
+                ModConfig.show(mod);
+            }
+        }
+
+        function exportMod(index) {
+            const mod = loadedMods[index];
+            if (!mod) return;
+
+            const blob = new Blob([JSON.stringify(mod, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${mod.modId}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportAllMods() {
+            if (loadedMods.length === 0) {
+                alert('⚠️ No mods to export');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(loadedMods, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sandboxels_mods.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function deleteMod(index) {
+            if (confirm('❓ Delete this mod? (Elements will remain in the game until refresh)')) {
+                loadedMods.splice(index, 1);
+                updateModList();
+            }
+        }
+
+        function clearAllMods() {
+            if (confirm('❓ Clear all loaded mods? (Elements will remain until refresh)')) {
+                loadedMods.length = 0;
+                updateModList();
+            }
+        }
+
+        // ===== ELEMENT MANAGER UI =====
+        function showElementList() {
+            const content = document.getElementById('element-manager-content');
+            const allElements = ElementManager.getAll();
+            
+            content.innerHTML = '';
+            
+            allElements.forEach(elem => {
+                if (elem.hidden) return;
+                
+                const item = document.createElement('div');
+                item.className = 'element-list-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'element-color';
+                const displayColor = Array.isArray(elem.color) ? elem.color[0] : elem.color;
+                colorBox.style.background = displayColor;
+                
+                const name = document.createElement('div');
+                name.textContent = elem.name;
+                name.style.flex = '1';
+                name.style.fontSize = '8px';
+                
+                item.appendChild(colorBox);
+                item.appendChild(name);
+                
+                item.onclick = () => showElementDetails(elem);
+                
+                content.appendChild(item);
+            });
+        }
+
+        function showElementDetails(elem) {
+            const content = document.getElementById('element-manager-content');
+            
+            const view = document.createElement('div');
+            view.className = 'element-detail-view';
+            
+            let html = `<div style="font-size: 11px; color: #e94560; margin-bottom: 10px;">${elem.name}</div>`;
+            
+            const props = [
+                ['ID', elem.id],
+                ['Alias', elem.alias],
+                ['Category', elem.category],
+                ['State', elem.state],
+                ['Density', elem.density + ' kg/m³'],
+                ['Temperature', elem.temp + '°C'],
+                ['Temp Low', elem.tempLow ? elem.tempLow + '°C → ' + elem.stateLow : '-'],
+                ['Temp High', elem.tempHigh ? elem.tempHigh + '°C → ' + elem.stateHigh : '-'],
+                ['Behavior', typeof elem.behavior === 'string' ? elem.behavior : typeof elem.behavior],
+                ['Viscosity', elem.viscosity || '-'],
+                ['Alpha', elem.alpha !== undefined ? elem.alpha : 1],
+                ['Glow', elem.glow ? 'Yes' : 'No'],
+                ['Hardness', elem.hardness || '-'],
+                ['Reactions', elem.reactions ? Object.keys(elem.reactions).length : 0],
+                ['Description', elem.desc || '-']
+            ];
+            
+            props.forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    html += `
+                        <div class="property-row">
+                            <span class="property-key">${key}:</span>
+                            <span class="property-value">${value}</span>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '<div class="btn-group" style="margin-top: 10px;">';
+            html += '<button class="small-btn" onclick="showElementList()">← Back</button>';
+            html += '</div>';
+            
+            view.innerHTML = html;
+            content.innerHTML = '';
+            content.appendChild(view);
+        }
+
+        function showElementStats() {
+            const content = document.getElementById('element-manager-content');
+            
+            const stats = {
+                total: ElementManager.count(),
+                reactions: ElementManager.countReactions(),
+                byCategory: {},
+                byState: {}
+            };
+            
+            for (let category in categories) {
+                stats.byCategory[category] = categories[category].length;
+            }
+            
+            ElementManager.getAll().forEach(elem => {
+                stats.byState[elem.state] = (stats.byState[elem.state] || 0) + 1;
+            });
+            
+            let html = '<div style="font-size: 11px; color: #e94560; margin-bottom: 10px;">📊 Statistics</div>';
+            
+            html += `
+                <div class="property-row">
+                    <span class="property-key">Total Elements:</span>
+                    <span class="property-value">${stats.total}</span>
+                </div>
+                <div class="property-row">
+                    <span class="property-key">Total Reactions:</span>
+                    <span class="property-value">${stats.reactions}</span>
+                </div>
+            `;
+            
+            html += '<div style="font-size: 9px; color: #e94560; margin: 10px 0;">By Category</div>';
+            for (let cat in stats.byCategory) {
+                html += `
+                    <div class="property-row">
+                        <span class="property-key">${cat}:</span>
+                        <span class="property-value">${stats.byCategory[cat]}</span>
+                    </div>
+                `;
+            }
+            
+            html += '<div style="font-size: 9px; color: #e94560; margin: 10px 0;">By State</div>';
+            for (let state in stats.byState) {
+                html += `
+                    <div class="property-row">
+                        <span class="property-key">${state}:</span>
+                        <span class="property-value">${stats.byState[state]}</span>
+                    </div>
+                `;
+            }
+            
+            html += '<div class="btn-group" style="margin-top: 10px;">';
+            html += '<button class="small-btn" onclick="showElementList()">View All</button>';
+            html += '</div>';
+            
+            content.innerHTML = html;
+        }
+
+        function filterElements(query) {
+            if (!query.trim()) {
+                showElementList();
+                return;
+            }
+            
+            const results = ElementManager.search(query);
+            const content = document.getElementById('element-manager-content');
+            
+            content.innerHTML = '';
+            
+            if (results.length === 0) {
+                content.innerHTML = '<div style="font-size: 7px; color: #666; padding: 15px; text-align: center;">No results found</div>';
+                return;
+            }
+            
+            results.forEach(elem => {
+                const item = document.createElement('div');
+                item.className = 'element-list-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'element-color';
+                const displayColor = Array.isArray(elem.color) ? elem.color[0] : elem.color;
+                colorBox.style.background = displayColor;
+                
+                const name = document.createElement('div');
+                name.textContent = elem.name;
+                name.style.flex = '1';
+                name.style.fontSize = '8px';
+                
+                item.appendChild(colorBox);
+                item.appendChild(name);
+                
+                item.onclick = () => showElementDetails(elem);
+                
+                content.appendChild(item);
+            });
+        }
+
+        // ===== SETTINGS HELPERS =====
+        function updateSliderValue(id, value) {
+            document.getElementById(id).textContent = value;
+        }
+
+        function updateCanvasScale() {
+            if (sim) {
+                sim.updateCanvasScale();
+            }
+        }
+
+        function updatePauseButton() {
+            // Update pause button text/icon if needed
+        }
+
+        // ===== WORLD SAVE/LOAD =====
+        function saveWorld() {
+            const name = prompt('💾 Save name:', 'world1');
+            if (name) {
+                const data = {
+                    grid: sim.grid,
+                    mods: loadedMods,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('sandboxels_' + name, JSON.stringify(data));
+                alert('✅ World saved successfully!');
+            }
+        }
+
+        function loadWorld() {
+            const name = prompt('📂 Load name:', 'world1');
+            if (name) {
+                const saved = localStorage.getItem('sandboxels_' + name);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    sim.grid = data.grid;
+                    alert('✅ World loaded successfully!');
+                } else {
+                    alert('❌ Save file not found!');
+                }
+            }
+        }
+
+        // ===== EXAMPLE MODS =====
+        function loadExampleMod(modType) {
+            const examples = {
+                behavior_demo: `// Behavior Grid Demo
+const modConfig = {
+    modId: "behavior_demo",
+    modName: "Behavior Grid Patterns",
+    author: "Tutorial",
+    version: "1.0",
+    description: "Examples of all behavior grid patterns",
+    elements: []
+};
+
+ElementManager.register({
+    id: "blue_sand",
+    name: "Blue Sand",
+    color: "#3366ff",
+    category: "powders",
+    state: "solid",
+    density: 1600,
+    behavior: [
+        "XX|XX|XX",
+        "XX|XX|XX",
+        "M2|M1|M2"
+    ],
+    desc: "Falls and spreads"
+});
+
+ElementManager.register({
+    id: "green_gas",
+    name: "Green Gas",
+    color: "#33ff33",
+    category: "gases",
+    state: "gas",
+    density: 0.5,
+    alpha: 0.5,
+    behavior: [
+        "M2|M1|M2",
+        "M1|XX|M1",
+        "M2|M1|M2"
+    ],
+    desc: "Rises and spreads"
+});
+
+ElementManager.register({
+    id: "spawner",
+    name: "Sand Spawner",
+    color: "#ffff00",
+    category: "special",
+    behavior: [
+        "XX|XX|XX",
+        "XX|XX|XX",
+        "XX|CR:sand%10|XX"
+    ],
+    desc: "Creates sand slowly"
+});
+
+modConfig.elements = ["blue_sand", "green_gas", "spawner"];`,
+
+                advanced_chemistry: `// Advanced Chemistry
+const modConfig = {
+    modId: "chemistry",
+    modName: "Chemistry Pack",
+    author: "Chemist",
+    version: "1.0",
+    description: "Acids, bases, and reactions",
+    elements: []
+};
+
+ElementManager.register({
+    id: "acid",
+    name: "Acid",
+    color: "#88ff00",
+    category: "liquids",
+    behavior: behaviors.LIQUID,
+    state: "liquid",
+    density: 1800,
+    temp: 20,
+    desc: "Corrosive liquid",
+    tick: function(pixel) {
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const target = getPixel(pixel.x + dx, pixel.y + dy);
+                if (target && target.id !== "acid" && target.id !== "stone" && Math.random() < 0.03) {
+                    deletePixel(target);
+                }
+            }
+        }
+    }
+});
+
+ElementManager.register({
+    id: "base",
+    name: "Base",
+    color: "#0088ff",
+    category: "liquids",
+    behavior: behaviors.LIQUID,
+    state: "liquid",
+    density: 1100,
+    temp: 20,
+    desc: "Alkaline solution",
+    reactions: {
+        acid: { elem1: "salt_water", elem2: "salt_water", chance: 0.5 }
+    }
+});
+
+ElementManager.register({
+    id: "salt_water",
+    name: "Salt Water",
+    color: "#6699cc",
+    category: "liquids",
+    behavior: behaviors.LIQUID,
+    state: "liquid",
+    density: 1025,
+    temp: 20
+});
+
+modConfig.elements = ["acid", "base", "salt_water"];`
+            };
+
+            if (examples[modType]) {
+                document.getElementById('mod-code').value = examples[modType];
+                switchTab('load-tab');
+            }
+        }
+
+        // ===== CANVAS INTERACTION =====
+        let currentTool = 'draw';
+        let currentElement = 'sand';
+        let isDrawing = false;
+
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentTool = btn.dataset.tool;
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const canvas = document.getElementById('canvas');
+                canvas.classList.remove('inspect-cursor', 'tool-cursor');
+                if (currentTool === 'inspect') {
+                    canvas.classList.add('inspect-cursor');
+                } else if (elements[currentElement]?.tool) {
+                    canvas.classList.add('tool-cursor');
+                }
+            });
+        });
+
+        function getCanvasCoords(e) {
+            const rect = sim.canvas.getBoundingClientRect();
+            return {
+                x: Math.floor((e.clientX - rect.left) / CONFIG.pixelScale),
+                y: Math.floor((e.clientY - rect.top) / CONFIG.pixelScale)
+            };
+        }
+
+        function drawBrush(x, y) {
+            const elem = elements[currentElement];
+            const maxSize = elem?.maxSize || 20;
+            const radius = Math.floor(Math.min(CONFIG.brushSize, maxSize) / 2);
+            
+            for (let dy = -radius; dy <= radius; dy++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    if (dx * dx + dy * dy <= radius * radius) {
+                        const px = x + dx;
+                        const py = y + dy;
+                        
+                        if (currentTool === 'draw') {
+                            if (elem?.tool) {
+                                const pixel = getPixel(px, py);
+                                if (pixel) elem.tool(pixel);
+                            } else {
+                                sim.setPixel(px, py, currentElement);
+                            }
+                        } else if (currentTool === 'erase') {
+                            const pixel = getPixel(px, py);
+                            if (pixel) deletePixel(pixel);
+                        } else if (currentTool === 'heat') {
+                            const pixel = getPixel(px, py);
+                            if (pixel) {
+                                pixel.temp = Math.min((pixel.temp || 20) + 100, 2000);
+                                pixelTempCheck(pixel);
+                            }
+                        } else if (currentTool === 'cool') {
+                            const pixel = getPixel(px, py);
+                            if (pixel) {
+                                pixel.temp = Math.max((pixel.temp || 20) - 100, -273);
+                                pixelTempCheck(pixel);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function showInspectTooltip(x, y, pixel) {
+            const tooltip = document.getElementById('inspect-tooltip');
+            const elem = elements[pixel.id];
+            
+            if (!elem) return;
+
+            let html = `<div class="tooltip-title">${elem.name || pixel.id}</div>`;
+            
+            html += `<div class="tooltip-section">`;
+            html += `<div class="tooltip-section-title">Basic Info</div>`;
+            html += `<div class="tooltip-prop"><span class="tooltip-label">ID:</span> <span class="tooltip-value">${pixel.id}</span></div>`;
+            if (elem.alias) html += `<div class="tooltip-prop"><span class="tooltip-label">Formula:</span> <span class="tooltip-value">${elem.alias}</span></div>`;
+            if (elem.desc) html += `<div class="tooltip-prop"><span class="tooltip-label">Description:</span> <span class="tooltip-value">${elem.desc}</span></div>`;
+            html += `</div>`;
+
+            html += `<div class="tooltip-section">`;
+            html += `<div class="tooltip-section-title">Physical Properties</div>`;
+            html += `<div class="tooltip-prop"><span class="tooltip-label">State:</span> <span class="tooltip-value">${elem.state || 'unknown'}</span></div>`;
+            html += `<div class="tooltip-prop"><span class="tooltip-label">Temp:</span> <span class="tooltip-value">${Math.round(pixel.temp || 0)}°C</span></div>`;
+            html += `<div class="tooltip-prop"><span class="tooltip-label">Density:</span> <span class="tooltip-value">${elem.density} kg/m³</span></div>`;
+            html += `</div>`;
+
+            if (elem.reactions && Object.keys(elem.reactions).length > 0) {
+                html += `<div class="tooltip-section">`;
+                html += `<div class="tooltip-section-title">Reactions</div>`;
+                html += `<div class="tooltip-prop"><span class="tooltip-value">${Object.keys(elem.reactions).join(', ')}</span></div>`;
+                html += `</div>`;
+            }
+
+            tooltip.innerHTML = html;
+            tooltip.classList.add('active');
+        }
+
+        function hideInspectTooltip() {
+            document.getElementById('inspect-tooltip').classList.remove('active');
+        }
+
+        document.getElementById('canvas').addEventListener('mousedown', (e) => {
+            const { x, y } = getCanvasCoords(e);
+            
+            if (currentTool === 'inspect') {
+                const pixel = getPixel(x, y);
+                if (pixel) showInspectTooltip(x, y, pixel);
+            } else {
+                isDrawing = true;
+                drawBrush(x, y);
+            }
+        });
+
+        document.getElementById('canvas').addEventListener('mousemove', (e) => {
+            const { x, y } = getCanvasCoords(e);
+            const tooltip = document.getElementById('inspect-tooltip');
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top = (e.clientY + 15) + 'px';
+            
+            if (currentTool === 'inspect') {
+                const pixel = getPixel(x, y);
+                if (pixel) {
+                    showInspectTooltip(x, y, pixel);
+                } else {
+                    hideInspectTooltip();
+                }
+            } else {
+                hideInspectTooltip();
+                if (isDrawing) {
+                    drawBrush(x, y);
+                }
+            }
+        });
+
+        document.getElementById('canvas').addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        document.getElementById('canvas').addEventListener('mouseleave', () => {
+            isDrawing = false;
+            hideInspectTooltip();
+        });
+
+        // ===== INITIALIZATION =====
+        const sim = new Simulation();
+        registerDefaults();
+        buildPalette();
+        updateModList();
+        showElementList();
+
+        function loop() {
+            sim.step();
+            sim.draw();
+            requestAnimationFrame(loop);
+        }
+
+        requestAnimationFrame(loop);
+
+        console.log('🎮 Sandboxels Plus Ultimate - Complete Edition');
+        console.log('✅ Enhanced pixel rendering with variation');
+        console.log('✅ Gas opacity effects');
+        console.log('✅ Complete behavior system');
+        console.log('✅ Element manager');
+        console.log('✅ Custom UI buttons for mods');
+        console.log('✅ Advanced settings');
+        console.log('📚 Total elements:', ElementManager.count());
+    </script>
+</body>
+</html>
